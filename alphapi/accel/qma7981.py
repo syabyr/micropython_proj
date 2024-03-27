@@ -51,14 +51,22 @@ QMA6981_ODR_16HZ = 0x01
 QMA6981_ODR_HIGH = 0x20
 
 
-#_ACCEL_FS_MASK = const(0b00011000)
+#Acceleration Range Resolution(FSR)
 ACCEL_FS_SEL_2G = const(0b0001)
 ACCEL_FS_SEL_4G = const(0b0010)
 ACCEL_FS_SEL_8G = const(0b0100)
 ACCEL_FS_SEL_16G = const(0b1000)
 ACCEL_FS_SEL_32G = const(0b1111)
 
-#bandwidth
+_ACCEL_SO_2G = 16384 # 1 / 16384 ie. 0.061 mg / digit
+_ACCEL_SO_4G = 8192 # 1 / 8192 ie. 0.122 mg / digit
+_ACCEL_SO_8G = 4096 # 1 / 4096 ie. 0.244 mg / digit
+_ACCEL_SO_16G = 2048 # 1 / 2048 ie. 0.488 mg / digit
+_ACCEL_SO_32G = 1024
+
+#bandwidth setting,for BW register
+#捕捉快速运动使用高带宽,捕捉慢运动使用低带宽
+#默认低带宽
 MCLK_DIV_BY_7695 = const(0b000)
 MCLK_DIV_BY_3855 = const(0b001)
 MCLK_DIV_BY_1935 = const(0b010)
@@ -106,17 +114,8 @@ MOTION_DETECT_NOTHING = 0
 MOTION_DETECT_ANY_MOTION = 1
 MOTION_DETECT_NO_MOTION = 2
 
-_ACCEL_SO_2G = 16384 # 1 / 16384 ie. 0.061 mg / digit
-_ACCEL_SO_4G = 8192 # 1 / 8192 ie. 0.122 mg / digit
-_ACCEL_SO_8G = 4096 # 1 / 4096 ie. 0.244 mg / digit
-_ACCEL_SO_16G = 2048 # 1 / 2048 ie. 0.488 mg / digit
-_ACCEL_SO_32G = 1024
-
-
 SF_G = 1
 SF_M_S2 = 9.80665 # 1 g = 9.80665 m/s2 ie. standard gravity
-SF_DEG_S = 1
-SF_RAD_S = 0.017453292519943 # 1 deg/s is 0.017453292519943 rad/s
 
 class QMA7981:
     """Class which provides interface to QMA8981 6-axis motion tracking device."""
@@ -132,9 +131,9 @@ class QMA7981:
             raise RuntimeError("QMA8981 not found in I2C bus.")
 
         # Reset, disable sleep mode
-        self._register_char(_REG_POWER_CTL, 0x40)
+        self._register_char(_REG_POWER_CTL, 0x00)
         utime.sleep_ms(100)
-        self._register_char(_REG_POWER_CTL, 0x80)
+        self._register_char(_REG_POWER_CTL, 0xC0)
         utime.sleep_ms(100)
 
         self._accel_so = self._accel_fs(accel_fs)
